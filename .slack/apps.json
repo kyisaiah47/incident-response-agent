@@ -1,1 +1,11 @@
-{}
+{
+  "apps": {
+    "E0B8Z03EP9A": {
+      "app_id": "A0B9PQ3PQRW",
+      "enterprise_id": "E0B8Z03EP9A",
+      "team_domain": "test-sandbox-123",
+      "team_id": "E0B8Z03EP9A"
+    }
+  },
+  "default": "test-sandbox-123"
+}
