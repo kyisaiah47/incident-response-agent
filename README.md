@@ -1,198 +1,106 @@
-# Deno Starter Template
+# Incident Response Agent
 
-This is a scaffolded Deno template used to build out Slack apps using the Slack
-CLI.
+**Slack-native incident management — built for the [Slack Agent Builder Challenge](https://slackagentbuilder.devpost.com/).**
 
-**Guide Outline**:
-
-- [Setup](#setup)
-  - [Install the Slack CLI](#install-the-slack-cli)
-  - [Clone the Template](#clone-the-template)
-- [Running Your Project Locally](#running-your-project-locally)
-- [Creating Triggers](#creating-triggers)
-- [Datastores](#datastores)
-- [Testing](#testing)
-- [Deploying Your App](#deploying-your-app)
-- [Viewing Activity Logs](#viewing-activity-logs)
-- [Project Structure](#project-structure)
-- [Resources](#resources)
+Track: New Slack Agent · Deno + Slack Functions SDK
 
 ---
 
-## Setup
+## What it does
 
-Before getting started, first make sure you have a development workspace where
-you have permission to install apps. **Please note that the features in this
-project require that the workspace be part of
-[a Slack paid plan](https://slack.com/pricing).**
+Incident Response Agent turns Slack into a complete incident command center. Two triggers cover the full lifecycle:
 
-### Install the Slack CLI
+**Declare Incident** — a modal collects service, severity (SEV1/2/3), and description, then automatically:
+1. Searches Slack for recent messages and context about the affected service
+2. Generates a unique incident ID and creates a dedicated war room channel (e.g. `inc-sev1-api-gateway-0607-1423`)
+3. Pages the on-call engineer via PagerDuty
+4. Fetches active Datadog monitors for the service and posts them to the war room
+5. Posts a full context brief so the team hits the ground running
 
-To use this template, you need to install and configure the Slack CLI.
-Step-by-step instructions can be found in our
-[Quickstart Guide](https://api.slack.com/automation/quickstart).
+**Resolve Incident** — captures root cause and fix, then drafts a complete postmortem from the war room conversation history.
 
-### Clone the Template
+Every incident is persisted in a Slack Datastore.
 
-Start by cloning this repository:
+## Architecture
 
-```zsh
-# Clone this project onto your machine
-$ slack create my-app -t slack-samples/deno-starter-template
+```
+Declare trigger (link trigger)
+    │
+    ▼
+IncidentDeclaredWorkflow
+    ├── search_context     → Slack search API (recent messages about service)
+    ├── prepare_incident   → generate incident ID + war room channel name
+    ├── CreateChannel      → Slack native function (Enterprise Grid-safe)
+    ├── create_war_room    → post context brief, invite declarer, save to datastore
+    ├── page_oncall        → PagerDuty REST API
+    └── fetch_metrics      → Datadog monitors API
 
-# Change into the project directory
-$ cd my-app
+Resolve trigger (link trigger)
+    │
+    ▼
+IncidentResolvedWorkflow
+    └── draft_postmortem   → reads war room history, generates postmortem doc
 ```
 
-## Running Your Project Locally
+## Tech stack
 
-While building your app, you can see your changes appear in your workspace in
-real-time with `slack run`. You'll know an app is the development version if the
-name has the string `(local)` appended.
+| Layer | Technology |
+|---|---|
+| Runtime | Deno |
+| Framework | Slack Functions SDK (`deno-slack-sdk`) |
+| Persistence | Slack Datastore |
+| Alerting | PagerDuty API |
+| Monitoring | Datadog API |
 
-```zsh
-# Run app locally
-$ slack run
+## Getting started
 
-Connected, awaiting events
+### Prerequisites
+
+- [Slack CLI](https://api.slack.com/automation/cli/install) installed and logged in
+- A Slack workspace on a paid plan
+- PagerDuty and Datadog API keys (optional — agent degrades gracefully without them)
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/kyisaiah47/incident-response-agent
+cd incident-response-agent
+slack app link
 ```
 
-To stop running locally, press `<CTRL> + C` to end the process.
+### 2. Set environment variables
 
-## Creating Triggers
-
-[Triggers](https://api.slack.com/automation/triggers) are what cause workflows
-to run. These triggers can be invoked by a user, or automatically as a response
-to an event within Slack.
-
-When you `run` or `deploy` your project for the first time, the CLI will prompt
-you to create a trigger if one is found in the `triggers/` directory. For any
-subsequent triggers added to the application, each must be
-[manually added using the `trigger create` command](#manual-trigger-creation).
-
-When creating triggers, you must select the workspace and environment that you'd
-like to create the trigger in. Each workspace can have a local development
-version (denoted by `(local)`), as well as a deployed version. _Triggers created
-in a local environment will only be available to use when running the
-application locally._
-
-### Link Triggers
-
-A [link trigger](https://api.slack.com/automation/triggers/link) is a type of
-trigger that generates a **Shortcut URL** which, when posted in a channel or
-added as a bookmark, becomes a link. When clicked, the link trigger will run the
-associated workflow.
-
-Link triggers are _unique to each installed version of your app_. This means
-that Shortcut URLs will be different across each workspace, as well as between
-[locally run](#running-your-project-locally) and
-[deployed apps](#deploying-your-app).
-
-With link triggers, after selecting a workspace and environment, the output
-provided will include a Shortcut URL. Copy and paste this URL into a channel as
-a message, or add it as a bookmark in a channel of the workspace you selected.
-Interacting with this link will run the associated workflow.
-
-**Note: triggers won't run the workflow unless the app is either running locally
-or deployed!**
-
-### Manual Trigger Creation
-
-To manually create a trigger, use the following command:
-
-```zsh
-$ slack trigger create --trigger-def triggers/sample_trigger.ts
+```bash
+slack env add PAGERDUTY_API_KEY your_key
+slack env add DATADOG_API_KEY your_key
+slack env add DATADOG_APP_KEY your_key
 ```
 
-## Datastores
+### 3. Run locally
 
-For storing data related to your app, datastores offer secure storage on Slack
-infrastructure. For an example of a datastore, see
-`datastores/sample_datastore.ts`. The use of a datastore requires the
-`datastore:write`/`datastore:read` scopes to be present in your manifest.
-
-## Testing
-
-For an example of how to test a function, see
-`functions/sample_function_test.ts`. Test filenames should be suffixed with
-`_test`.
-
-Run all tests with `deno test`:
-
-```zsh
-$ deno test
+```bash
+slack run
 ```
 
-## Deploying Your App
+### 4. Create triggers
 
-Once development is complete, deploy the app to Slack infrastructure using
-`slack deploy`:
-
-```zsh
-$ slack deploy
+```bash
+slack trigger create --trigger-def triggers/declare_trigger.ts
+slack trigger create --trigger-def triggers/resolve_trigger.ts
 ```
 
-When deploying for the first time, you'll be prompted to
-[create a new link trigger](#creating-triggers) for the deployed version of your
-app. When that trigger is invoked, the workflow should run just as it did when
-developing locally (but without requiring your server to be running).
+Post the shortcut URLs into any channel to use them.
 
-## Viewing Activity Logs
+### 5. Deploy to production
 
-Activity logs of your application can be viewed live and as they occur with the
-following command:
-
-```zsh
-$ slack activity --tail
+```bash
+slack deploy
 ```
 
-## Project Structure
+## Severity levels
 
-### `.slack/`
-
-Contains `apps.dev.json` and `apps.json`, which include installation details for
-development and deployed apps.
-
-Contains `hooks.json` used by the CLI to interact with the project's SDK
-dependencies. It contains script hooks that are executed by the CLI and
-implemented by the SDK.
-
-### `datastores/`
-
-[Datastores](https://api.slack.com/automation/datastores) securely store data
-for your application on Slack infrastructure. Required scopes to use datastores
-include `datastore:write` and `datastore:read`.
-
-### `functions/`
-
-[Functions](https://api.slack.com/automation/functions) are reusable building
-blocks of automation that accept inputs, perform calculations, and provide
-outputs. Functions can be used independently or as steps in workflows.
-
-### `triggers/`
-
-[Triggers](https://api.slack.com/automation/triggers) determine when workflows
-are run. A trigger file describes the scenario in which a workflow should be
-run, such as a user pressing a button or when a specific event occurs.
-
-### `workflows/`
-
-A [workflow](https://api.slack.com/automation/workflows) is a set of steps
-(functions) that are executed in order.
-
-Workflows can be configured to run without user input or they can collect input
-by beginning with a [form](https://api.slack.com/automation/forms) before
-continuing to the next step.
-
-### `manifest.ts`
-
-The [app manifest](https://api.slack.com/automation/manifest) contains the app's
-configuration. This file defines attributes like app name and description.
-
-## Resources
-
-To learn more about developing automations on Slack, visit the following:
-
-- [Automation Overview](https://api.slack.com/automation)
-- [CLI Quick Reference](https://api.slack.com/automation/cli/quick-reference)
-- [Samples and Templates](https://api.slack.com/automation/samples)
+| Level | Meaning |
+|---|---|
+| SEV1 | Critical — full outage |
+| SEV2 | Major — degraded service |
+| SEV3 | Minor — partial impact |
