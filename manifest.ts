@@ -5,7 +5,7 @@ import IncidentsDatastore from "./datastores/incidents.ts";
 
 export default Manifest({
   name: "Incident Response Agent",
-  description: "Declare incidents, auto-create war rooms, page on-call, surface Slack + Datadog context, and generate AI postmortems",
+  description: "Declare incidents, auto-create war rooms, page on-call, real-time event search, surface Slack + Datadog context, and generate AI postmortems",
   icon: "assets/default_new_app_icon.png",
   workflows: [IncidentDeclaredWorkflow, IncidentResolvedWorkflow],
   outgoingDomains: [

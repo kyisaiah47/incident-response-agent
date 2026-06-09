@@ -22,6 +22,7 @@ Incident Response Agent turns Slack into a full incident command center using th
 
 - **One-click war room creation** — generates a unique incident channel (e.g. `inc-sev1-api-gateway-0607-1423`) automatically
 - **Automatic context brief** — searches Slack for recent messages about the affected service and posts them to the war room before anyone types a word
+- **Real-time event search** — queries the Datadog Events v2 real-time search API for all service-related events in the last 6 hours and surfaces them in the war room on declaration
 - **PagerDuty paging** — on-call engineer is paged the moment an incident is declared
 - **Live Datadog monitor feed** — active monitors for the impacted service are pulled and posted to the war room on declaration
 - **AI-generated postmortems** — Resolve trigger reads the full war room conversation and drafts a structured postmortem doc
@@ -32,11 +33,12 @@ Declare trigger (link trigger)
     │
     ▼
 IncidentDeclaredWorkflow
-    ├── search_context     → Slack search API (recent messages about service)
+    ├── search_context     → Slack channel history search (recent messages about service)
     ├── prepare_incident   → generate incident ID + war room channel name
     ├── CreateChannel      → Slack native function (Enterprise Grid-safe)
     ├── create_war_room    → post context brief, invite declarer, save to datastore
     ├── page_oncall        → PagerDuty REST API
+    ├── search_events      → Datadog Events v2 real-time search API (last 6h)
     └── fetch_metrics      → Datadog monitors API
 
 Resolve trigger (link trigger)

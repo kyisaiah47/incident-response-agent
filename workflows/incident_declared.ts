@@ -1,5 +1,6 @@
 import { DefineWorkflow, Schema } from "deno-slack-sdk/mod.ts";
 import { SearchContextDefinition } from "../functions/search_context.ts";
+import { SearchEventsDefinition } from "../functions/search_events.ts";
 import { PrepareIncidentDefinition } from "../functions/prepare_incident.ts";
 import { CreateWarRoomDefinition } from "../functions/create_war_room.ts";
 import { PageOncallDefinition } from "../functions/page_oncall.ts";
@@ -103,7 +104,14 @@ IncidentDeclaredWorkflow.addStep(PageOncallDefinition, {
   channel_id: createChannelStep.outputs.channel_id,
 });
 
-// Step 7: Fetch Datadog monitors and post to war room
+// Step 7: Real-time search Datadog Events for service activity (last 6h)
+IncidentDeclaredWorkflow.addStep(SearchEventsDefinition, {
+  service: form.outputs.fields.service,
+  severity: form.outputs.fields.severity,
+  channel_id: createChannelStep.outputs.channel_id,
+});
+
+// Step 8: Fetch Datadog monitors and post to war room
 IncidentDeclaredWorkflow.addStep(FetchMetricsDefinition, {
   service: form.outputs.fields.service,
   channel_id: createChannelStep.outputs.channel_id,
