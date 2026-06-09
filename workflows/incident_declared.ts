@@ -60,6 +60,8 @@ const form = IncidentDeclaredWorkflow.addStep(Schema.slack.functions.OpenForm, {
 const contextStep = IncidentDeclaredWorkflow.addStep(SearchContextDefinition, {
   service: form.outputs.fields.service,
   severity: form.outputs.fields.severity,
+  description: form.outputs.fields.description,
+  channel_id: IncidentDeclaredWorkflow.inputs.channel,
 });
 
 // Step 3: Generate incident ID, channel name, and resolve workspace team_id

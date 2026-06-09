@@ -95,6 +95,18 @@ Post the shortcut URLs into any channel to start using the agent.
 slack deploy
 ```
 
+## Hackathon submission details
+
+| Field | Value |
+|---|---|
+| Track | New Slack Agent |
+| Slack App ID | `A0B9PQ3PQRW` |
+| Sandbox workspace | https://test-sandbox-123.slack.com |
+
+> Judges: sandbox access has been granted to slackhack@salesforce.com and testing@devpost.com.
+
+---
+
 ## 📄 License
 
 MIT

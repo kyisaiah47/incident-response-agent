@@ -12,6 +12,7 @@ export default Manifest({
     "api.pagerduty.com",
     "api.datadoghq.com",
     "api.datadoghq.eu",
+    "api.anthropic.com",
   ],
   datastores: [IncidentsDatastore],
   botScopes: [
@@ -21,6 +22,7 @@ export default Manifest({
     "channels:manage",
     "channels:history",
     "channels:read",
+    "channels:join",
     "groups:write",
     "datastore:read",
     "datastore:write",
