@@ -27,6 +27,27 @@ Incident Response Agent turns Slack into a full incident command center using th
 - **AI-generated postmortems** — Resolve trigger reads the full war room conversation and drafts a structured postmortem doc
 - **Graceful degradation** — PagerDuty and Datadog integrations are optional; the agent works without them
 
+```
+Declare trigger (link trigger)
+    │
+    ▼
+IncidentDeclaredWorkflow
+    ├── search_context     → Slack search API (recent messages about service)
+    ├── prepare_incident   → generate incident ID + war room channel name
+    ├── CreateChannel      → Slack native function (Enterprise Grid-safe)
+    ├── create_war_room    → post context brief, invite declarer, save to datastore
+    ├── page_oncall        → PagerDuty REST API
+    └── fetch_metrics      → Datadog monitors API
+
+Resolve trigger (link trigger)
+    │
+    ▼
+IncidentResolvedWorkflow
+    └── draft_postmortem   → reads war room history, generates postmortem doc
+```
+
+See [architecture.md](architecture.md) for a full Mermaid diagram.
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
@@ -52,8 +73,9 @@ git clone https://github.com/kyisaiah47/incident-response-agent
 cd incident-response-agent
 slack app link
 
-# Set optional integrations
-slack env add PAGERDUTY_API_KEY your_key
+slack env add ANTHROPIC_API_KEY your_key
+slack env add PAGERDUTY_TOKEN your_key
+slack env add PAGERDUTY_SERVICE_ID your_service_id
 slack env add DATADOG_API_KEY your_key
 slack env add DATADOG_APP_KEY your_key
 
